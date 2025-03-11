@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
 const { v4: uuidv4 } = require("uuid");
+const { apiCall, saveMatch } = require("./apiCallClass");
 
 const app = express();
 const server = http.createServer(app);
@@ -11,9 +12,15 @@ const queue = []; // In-memory matchmaking queue
 const activeMatches = new Map(); // Stores matchId -> { user1, user2 }
 const matchAcknowledgments = new Map(); // Stores acknowledgment status
 
+
+
+
+
 // WebSocket Connection Handler
 wss.on("connection", (ws) => {
     console.log("User connected");
+    
+
 
     ws.on("message", (message) => {
         try {
@@ -42,8 +49,10 @@ wss.on("connection", (ws) => {
 
 // 1️⃣ User requests to find an opponent
 function handleFindOpponent(ws, username) {
+
     console.log(`${username} is looking for an opponent...`);
     ws.username = username; // Store username in WebSocket object
+    new MatchMakingService(ws)
     queue.push(ws); // Add user to queue
 
     if (queue.length >= 2) {
@@ -101,6 +110,9 @@ function handleAcknowledgment(ws, matchId) {
 
     if (ackStatus.user1Ack && ackStatus.user2Ack) {
         matchAcknowledgments.delete(matchId); // Cleanup
+
+        saveMatch(matchId,match.user1,match.user2)//api call
+
         startCountdown(matchId);
     }
 }
@@ -170,6 +182,6 @@ function cancelMatch(matchId) {
 }
 
 // Start the server
-server.listen(3000, () => {
+server.listen(3001, () => {
     console.log("Server running on http://localhost:3000");
 });

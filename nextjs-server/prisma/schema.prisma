@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,12 +8,101 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(uuid())
-  email    String
-  provider Provider
-  imageUrl String
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  rating       Int      @default(1200)
+  createdAt    DateTime @default(now())
+
+  matches1    Match[]      @relation("UserMatches1")
+  matches2    Match[]      @relation("UserMatches2")
+  submissions Submission[]
+  Match       Match[]
+
+  @@index([rating]) // Index for sorting users by rating
 }
 
-enum Provider {
-  Google
+model Match {
+  id          Int          @id @default(autoincrement())
+  user1       User         @relation("UserMatches1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user1Id     Int
+  user2       User         @relation("UserMatches2", fields: [user2Id], references: [id], onDelete: Cascade)
+  user2Id     Int
+  problem     Problem      @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problemId   Int
+  startTime   DateTime?
+  endTime     DateTime?
+  winner      User?        @relation(fields: [winnerId], references: [id], onDelete: SetNull)
+  winnerId    Int?
+  status      MatchStatus  @default(WAITING)
+  submissions Submission[]
+
+  @@unique([user1Id, user2Id, problemId]) // Ensure unique match per user and problem
+  @@index([status]) // Index for faster match status queries
+}
+
+enum MatchStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Problem {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  difficulty  Difficulty
+  testCases   TestCase[]
+  matches     Match[]
+  createdAt   DateTime   @default(now())
+
+  @@index([difficulty]) // Optimized for filtering problems by difficulty
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model TestCase {
+  id        Int      @id @default(autoincrement())
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problemId Int
+  input     String
+  output    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Submission {
+  id          Int              @id @default(autoincrement())
+  match       Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchId     Int
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  code        String
+  language    Language         @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  languageId  String
+  submittedAt DateTime         @default(now())
+  status      SubmissionStatus @default(PENDING)
+
+  @@index([userId]) // Speed up user submission queries
+  @@index([matchId]) // Speed up match submission queries
+}
+
+enum SubmissionStatus {
+  PENDING
+  FAILED
+  PASSED
+}
+
+model Language {
+  id         String       @id @default(uuid())
+  name       String       @unique
+  judge0id   Int
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @default(now())
+  submission Submission[]
 }
