@@ -29,7 +29,7 @@ model Match {
   user1Id     Int
   user2       User         @relation("UserMatches2", fields: [user2Id], references: [id], onDelete: Cascade)
   user2Id     Int
-  problem     Problem      @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problem     Problem?     @relation(fields: [problemId], references: [id], onDelete: Cascade)
   problemId   Int
   startTime   DateTime?
   endTime     DateTime?

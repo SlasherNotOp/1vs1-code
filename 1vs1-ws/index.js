@@ -52,7 +52,8 @@ function handleFindOpponent(ws, username) {
 
     console.log(`${username} is looking for an opponent...`);
     ws.username = username; // Store username in WebSocket object
-    new MatchMakingService(ws)
+    
+    // new MatchMakingService(ws)
     queue.push(ws); // Add user to queue
 
     if (queue.length >= 2) {
@@ -75,7 +76,7 @@ function createMatch(user1, user2) {
     const matchData = JSON.stringify({
         event: "match_found",
         match_id: matchId,
-        opponent: { username: user2.username }
+        opponent: { username: user2.usernam }
     });
     user1.send(matchData);
 
@@ -111,7 +112,9 @@ function handleAcknowledgment(ws, matchId) {
     if (ackStatus.user1Ack && ackStatus.user2Ack) {
         matchAcknowledgments.delete(matchId); // Cleanup
 
-        saveMatch(matchId,match.user1,match.user2)//api call
+        saveMatch(matchId,match.user1.username,match.user2.username)//api call
+
+        console.log("api body for matching making",matchId,match.user1.username,match.user2.username)
 
         startCountdown(matchId);
     }
@@ -182,6 +185,7 @@ function cancelMatch(matchId) {
 }
 
 // Start the server
-server.listen(3001, () => {
-    console.log("Server running on http://localhost:3000");
+const port=3001
+server.listen(port, () => {
+    console.log("Server running on http://localhost:",port);
 });
