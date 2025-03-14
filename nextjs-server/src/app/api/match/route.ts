@@ -15,16 +15,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "User 2 not found" }, { status: 404 });
         }
 
-        // ✅ Use Unchecked Creation (No relation objects required)
+        //get a random problem from db
+        const randomProblemId=12
         await prismaClient.match.create({
             data: {
                 id: matchId,
                 user1Id,
                 user2Id,
+                problemId:randomProblemId
             },
         });
 
-        return NextResponse.json({ message: "Match created successfully" }, { status: 201 });
+        return NextResponse.json({ problemId:randomProblemId }, { status: 201 });
 
     } catch (error) {
         console.error("Error creating match:", error);
